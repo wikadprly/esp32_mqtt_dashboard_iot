@@ -1,0 +1,329 @@
+# Tech Specification Document — MQTT Android App (Flutter + sqlite + mqtt_client)
+
+**Project goal:** Build an Android application that authenticates users (username/password), connects to a public MQTT broker, subscribes and publishes to specific topics for an ESP32-based IoT system, logs sensor data (temperature and humidity) locally in SQLite and shows a dashboard with history and simple suggestions based on sensor values.
+
+---
+
+## 1. High-level features
+
+1. **Authentication**
+
+   * Local form-based login (username/password) used to connect to MQTT broker (credentials forwarded to broker connection). No remote authentication server required for this task.
+
+2. **MQTT connectivity & management**
+
+   * Connect/disconnect to MQTT broker with configurable settings (server, port, username, password).
+   * Automatic reconnect on network drop with exponential backoff.
+   * Status indicator showing connection state (Connected / Connecting / Disconnected).
+
+3. **Subscribe & Publish**
+
+   * Subscribe to topics to receive sensor data: temperature and humidity (topic format described below).
+   * Publish control messages to control the ESP32 LED state (1 = ON, 0 = OFF) via a button.
+   * Provide manual publish UI for quick testing of any topic/payload.
+
+4. **Dashboard & History**
+
+   * Local history of received sensor messages saved in SQLite.
+   * Chart view (time-series) for temperature and humidity.
+   * List view to see raw payloads and timestamps.
+
+5. **Recommendations / Simple Automation**
+
+   * Basic rule engine that suggests actions based on sensor thresholds (e.g., if temperature > 35°C -> suggest “Turn on fan / alert” or if humidity > 80% -> suggest “Enable dehumidifier”).
+   * Optional: auto-publish recommended control messages after user confirmation.
+
+6. **Device Control UI**
+
+   * Toggle button for LED which sends `1` or `0` to topic `polines/{nim}/data/led` (replace `{nim}` with the student NIM value).
+   * Current LED state display (best-effort: reflect last published value or last known state).
+
+7. **Offline-first / Local caching**
+
+   * Store incoming messages locally so dashboard and history are available offline.
+   * Queue control publishes while offline and send when reconnected (optional: user confirmation).
+
+8. **Developer and debug tools**
+
+   * Simple logs page showing the raw MQTT messages and publish history.
+   * Option to export SQLite data to CSV.
+
+---
+
+## 2. Technology Stack
+
+* **Client:** Flutter (Dart)
+* **Local DB:** sqflite (SQLite for Flutter)
+* **MQTT:** mqtt_client Dart package
+* **Charts:** A lightweight Flutter chart library (e.g., charts_flutter or fl_chart)
+* **State management:** Provider, Riverpod, or Bloc (choose one; Provider is simplest)
+* **Platform:** Android (target Android 9+ or as required by course)
+
+---
+
+## 3. MQTT topics & payload conventions
+
+Use `polines/{nim}/...` where `{nim}` is the student identifier (use the one assigned). Example prefix for the project: `polines/33424225/`.
+
+* **Sensor publishes (ESP32 -> Broker):**
+
+  * `polines/{nim}/data/sensor/suhu`  — payload: a numeric value representing temperature in °C (e.g., `30`)
+  * `polines/{nim}/data/sensor/humidity` — payload: a numeric % value (e.g., `60`)
+
+* **Control command (App -> Broker -> ESP32):**
+
+  * `polines/{nim}/data/led` — payload: `1` for ON, `0` for OFF
+
+* **Optional status reporting (ESP32 -> Broker):**
+
+  * `polines/{nim}/status/led` — payload: `1` / `0` or "ON"/"OFF"
+
+> Note: Keep payloads as plain text numeric values for simplicity.
+
+---
+
+## 4. Application flow (user journeys)
+
+### 4.1 First-time user (basic flow)
+
+1. Open app → Login screen (username, password, broker host, port optional in advanced settings).
+2. User enters credentials and taps **Connect**.
+3. App attempts MQTT connection to broker (configured default: `broker.emqx.io`, username `emqx`, password `public`).
+4. On connection success, app auto-subscribes to:
+
+   * `polines/{nim}/data/sensor/suhu`
+   * `polines/{nim}/data/sensor/humidity`
+5. Incoming messages are parsed and saved to local DB.
+6. User navigates to Dashboard to see recent sensor values and history charts.
+7. User toggles LED button → app publishes `1` or `0` to `polines/{nim}/data/led`.
+
+### 4.2 Receiving sensor updates
+
+* Each incoming message triggers:
+
+  1. Parse payload (attempt numeric parse).
+  2. Insert a row into `sensor_data` table with timestamp, topic, value, and raw payload.
+  3. Update UI streams (provider / state notifier) to refresh charts and last-known values.
+  4. Run simple recommendation rules and present suggestions if thresholds are exceeded.
+
+### 4.3 Offline / reconnect behavior
+
+* If disconnected, app shows offline state and queues UI operations (like toggle commands) until reconnect. On reconnect, queued publishes are sent.
+* Database remains the source of truth for the historical dashboard.
+
+---
+
+## 5. Database schema (SQLite)
+
+### 5.1 `users` table (optional local user store)
+
+```sql
+CREATE TABLE IF NOT EXISTS users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  username TEXT NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL,
+  created_at INTEGER NOT NULL -- unix epoch ms
+);
+```
+
+> For the project scope, storing hashed password locally is acceptable for demonstration, but do NOT use this for production authentication.
+
+### 5.2 `sensor_data` table (main time-series storage)
+
+```sql
+CREATE TABLE IF NOT EXISTS sensor_data (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  topic TEXT NOT NULL,
+  sensor_type TEXT NOT NULL, -- 'suhu' or 'humidity'
+  value REAL NOT NULL,
+  raw_payload TEXT,
+  timestamp INTEGER NOT NULL -- unix epoch ms
+);
+```
+
+* Index on `timestamp` and `sensor_type` for query performance.
+
+```sql
+CREATE INDEX IF NOT EXISTS idx_sensor_time ON sensor_data(timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_sensor_type ON sensor_data(sensor_type);
+```
+
+### 5.3 `commands` table (publish history / queued commands)
+
+```sql
+CREATE TABLE IF NOT EXISTS commands (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  topic TEXT NOT NULL,
+  payload TEXT NOT NULL,
+  status TEXT NOT NULL, -- 'pending', 'sent', 'failed'
+  created_at INTEGER NOT NULL,
+  sent_at INTEGER
+);
+```
+
+### 5.4 `settings` table (app preferences)
+
+```sql
+CREATE TABLE IF NOT EXISTS settings (
+  key TEXT PRIMARY KEY,
+  value TEXT
+);
+```
+
+---
+
+## 6. Data model in Dart (samples)
+
+```dart
+class SensorData {
+  final int id;
+  final String topic;
+  final String sensorType; // 'suhu' or 'humidity'
+  final double value;
+  final DateTime timestamp;
+
+  // ... constructors, fromMap(), toMap() for sqflite
+}
+
+class Command {
+  final int id;
+  final String topic;
+  final String payload;
+  final String status; // pending/sent/failed
+  final DateTime createdAt;
+}
+```
+
+---
+
+## 7. Flutter app structure (screens & components)
+
+* **LoginScreen** — username, password, broker config, connect button.
+* **HomeScreen / Dashboard** — shows latest values, mini-charts, and quick-action LED toggle.
+* **Detail Screen** — time-series charts and list of sensor_data for chosen sensor.
+* **Device Control Screen** — manual publish form (topic + payload), plus quick LED control.
+* **Logs Screen** — raw MQTT messages and command history.
+* **Settings Screen** — broker settings, NIM configuration, export DB.
+
+State management: provide a `MqttService` singleton/provider that exposes connect/disconnect/publish/subscribe and streams for incoming messages.
+
+---
+
+## 8. MQTT client details & recommended config
+
+* **Broker default:** `broker.emqx.io` (port 1883, no TLS for simplicity in lab)
+* **Credentials default:** username: `emqx`, password: `public`
+* **Client ID:** `flutter-client-{nim}-{random}`
+* **Keepalive:** 60s
+* **QoS:** use QoS 0 for sensors (lower latency) and QoS 1 for control messages to improve reliability.
+* **Subscriptions:** topic filters `polines/{nim}/#` or explicit sensor topics.
+* **Auto-reconnect:** implement exponential backoff with jitter.
+
+Sample code snippet (connect):
+
+```dart
+final client = MqttClient('broker.emqx.io', clientId);
+client.port = 1883;
+client.logging(on: false);
+client.onConnected = onConnected;
+client.onDisconnected = onDisconnected;
+// set username and password
+client.connectionMessage = MqttConnectMessage()
+  .withClientIdentifier(clientId)
+  .authenticateAs(user, pass)
+  .startClean();
+
+await client.connect();
+```
+
+---
+
+## 9. Recommendation rules (simple examples)
+
+* If `suhu >= 35` → Suggest: "High temperature detected — consider turning on cooling".
+* If `suhu <= 18` → Suggest: "Low temperature — consider checking heating or insulation".
+* If `humidity >= 80` → Suggest: "High humidity — risk of condensation; consider dehumidifying".
+* If `humidity <= 30` → Suggest: "Low humidity — may cause dryness; consider humidifier".
+
+Rules are configurable in app settings (thresholds stored in `settings` table).
+
+---
+
+## 10. UI/UX notes
+
+* Keep controls large and accessible (this is a lab/demo app).
+* Show last update timestamp for each sensor.
+* Show clear connection indicator on every page header.
+* Confirm control actions with a small snackbar or confirm dialog to avoid accidental toggles.
+
+---
+
+## 11. Developer workflow & Qwen steps (how to use Qwen Code as requested)
+
+1. Create this file and save as `tech_spec_document.md` in your project folder.
+
+2. If using Qwen Code (optional), install it and run in the project folder.
+
+3. Open terminal / CMD -> navigate to folder containing `tech_spec_document.md`.
+
+4. Run Qwen prompt:
+
+   ```bash
+   qwen "buat aplikasi berdasarkan @tech_spec_document.md"
+   ```
+
+   * Qwen will generate code or scaffolding based on the spec and save artifacts in the same folder.
+
+5. Open the generated folder in VS Code. From VS Code terminal run:
+
+   ```bash
+   flutter clean
+   flutter pub get
+   flutter run
+   ```
+
+6. Application default MQTT settings (set in app settings):
+
+   * server: `broker.emqx.io`
+   * user: `emqx`
+   * pass: `public`
+
+7. For testing with a desktop MQTT client (MQTTx or MQTT Explorer):
+
+   * Subscribe to: `polines/{nim}/data/sensor/suhu` and `polines/{nim}/data/sensor/humidity` and publish test values (e.g., 30 and 60).
+   * Publish to control topic to toggle LED: `polines/{nim}/data/led` with payload `1` or `0`.
+
+---
+
+## 12. Security and privacy notes
+
+* This demo uses plaintext credentials and an open broker: acceptable for lab/demo but not secure for production.
+* For production, use TLS (MQTTS), proper authentication, and avoid storing raw passwords locally.
+
+---
+
+## 13. Deliverables (what to hand in)
+
+* `tech_spec_document.md` (this file)
+* Flutter project folder with source code
+* README with instructions to run the app and default broker settings
+* Sample dataset exported from SQLite (CSV)
+
+---
+
+## 14. Next steps & implementation estimates (high level)
+
+1. Scaffold Flutter project & app screens — 1–2 days.
+2. Implement MQTT service (connect, subscribe, publish) — 1–2 days.
+3. Implement SQLite storage and models — 1 day.
+4. Dashboard & charts — 1–2 days.
+5. Polish UI, recommendations, and testing — 1–2 days.
+
+---
+
+If you want, I can now:
+
+* Generate starter Flutter code (main.dart, mqtt service, sample screens) based on this spec, or
+* Walk you step-by-step to implement each module.
+
+Tell me which one you prefer and I’ll produce the next artifact. Good work — you have a clear head-start. 🚀
