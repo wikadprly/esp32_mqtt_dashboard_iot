@@ -5,13 +5,14 @@ import 'providers/database_provider.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/device_control_screen.dart';
 import 'screens/logs_screen.dart';
-import 'screens/sensor_detail_screen.dart';
 
 void main() {
   runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
@@ -28,13 +29,14 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         title: 'MQTT IoT App',
         theme: ThemeData(
-          primarySwatch: Colors.teal,
+          primarySwatch: Colors.blue,
+          primaryColor: Colors.blue[100], // Soft light blue
           visualDensity: VisualDensity.adaptivePlatformDensity,
         ),
-        home: DashboardScreen(),
+        home: const DashboardScreen(),
         routes: {
-          '/device_control': (context) => DeviceControlScreen(),
-          '/logs': (context) => LogsScreen(),
+          '/device_control': (context) => const DeviceControlScreen(),
+          '/logs': (context) => const LogsScreen(),
         },
       ),
     );

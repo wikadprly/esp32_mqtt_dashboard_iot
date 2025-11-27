@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
@@ -8,7 +7,7 @@ import '../providers/database_provider.dart';
 class MqttProvider with ChangeNotifier {
   MqttServerClient? _client;
   String _connectionState = 'Disconnected';
-  String _nim = '33424225'; // Hardcoded NIM
+  final String _nim = '33424225'; // Hardcoded NIM
   bool _isConnected = false;
 
   // Hardcoded MQTT settings
@@ -88,7 +87,7 @@ class MqttProvider with ChangeNotifier {
   }
 
   void _onSubscribed(String topic) {
-    print('Successfully subscribed to topic: $topic');
+    debugPrint('Successfully subscribed to topic: $topic');
   }
 
   void _onMessage(covariant List<MqttReceivedMessage<MqttMessage>> messageList) {
@@ -103,7 +102,7 @@ class MqttProvider with ChangeNotifier {
         // which we need to convert to a string
         messageString = payload.payload.message.toList().map((e) => String.fromCharCode(e)).join('');
       } catch (e) {
-        print('Error converting payload to string: $e');
+        debugPrint('Error converting payload to string: $e');
         continue;
       }
 

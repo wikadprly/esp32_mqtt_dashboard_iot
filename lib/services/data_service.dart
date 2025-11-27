@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import '../models/sensor_data.dart';
 import '../models/command.dart';
 import '../providers/database_provider.dart';
@@ -33,7 +34,7 @@ class DataService {
         await databaseProvider.insertSensorData(sensorData);
       }
     } catch (e) {
-      print('Error parsing sensor data: $e');
+      debugPrint('Error parsing sensor data: $e');
     }
   }
 
@@ -48,7 +49,7 @@ class DataService {
 
       await databaseProvider.insertCommand(command);
     } catch (e) {
-      print('Error storing command: $e');
+      debugPrint('Error storing command: $e');
     }
   }
 

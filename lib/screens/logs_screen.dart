@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../providers/database_provider.dart';
 
 class LogsScreen extends StatelessWidget {
+  const LogsScreen({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     final databaseProvider = Provider.of<DatabaseProvider>(context);
@@ -10,8 +12,8 @@ class LogsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text('Logs'),
-        backgroundColor: Colors.blue,
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.blue[100],
+        foregroundColor: Colors.blue[900],
       ),
       body: Padding(
         padding: EdgeInsets.all(16.0),
@@ -52,7 +54,7 @@ class LogsScreen extends StatelessWidget {
                                   children: [
                                     Icon(
                                       log['type'] == 'publish' ? Icons.upload : Icons.download,
-                                      color: log['type'] == 'publish' ? Colors.blue : Colors.green,
+                                      color: log['type'] == 'publish' ? Colors.blue[600] : Colors.blue[300],
                                     ),
                                     SizedBox(width: 8),
                                     Expanded(
@@ -83,10 +85,10 @@ class LogsScreen extends StatelessWidget {
                                   'Status: ${log['status']}',
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: log['status'] == 'sent' 
-                                        ? Colors.green 
-                                        : log['status'] == 'pending' 
-                                            ? Colors.orange 
+                                    color: log['status'] == 'sent'
+                                        ? Colors.blue[600]
+                                        : log['status'] == 'pending'
+                                            ? Colors.grey
                                             : Colors.red,
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -109,8 +111,8 @@ class LogsScreen extends StatelessWidget {
           // Export logs functionality would go here
           _showExportDialog(context);
         },
-        backgroundColor: Colors.blue,
-        child: Icon(Icons.file_download, color: Colors.white),
+        backgroundColor: Colors.blue[300],
+        child: Icon(Icons.file_download, color: Colors.blue[900]),
       ),
     );
   }
@@ -187,7 +189,7 @@ class LogsScreen extends StatelessWidget {
     // For now, just show a success message
     final snackBar = SnackBar(
       content: Text('CSV export functionality would be implemented here'),
-      backgroundColor: Colors.green,
+      backgroundColor: Colors.blue[300],
     );
 
     ScaffoldMessenger.of(context).showSnackBar(snackBar);

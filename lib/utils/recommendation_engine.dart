@@ -10,16 +10,16 @@ class RecommendationEngine {
 
     // Temperature recommendations
     if (temperature >= temperatureHighThreshold) {
-      recommendations.add("High temperature detected (${temperature}°C) — consider turning on cooling");
+      recommendations.add("High temperature detected ($temperature°C) — consider turning on cooling");
     } else if (temperature <= temperatureLowThreshold) {
-      recommendations.add("Low temperature detected (${temperature}°C) — consider checking heating or insulation");
+      recommendations.add("Low temperature detected ($temperature°C) — consider checking heating or insulation");
     }
 
     // Humidity recommendations
     if (humidity >= humidityHighThreshold) {
-      recommendations.add("High humidity detected (${humidity}%) — risk of condensation; consider dehumidifying");
+      recommendations.add("High humidity detected ($humidity%) — risk of condensation; consider dehumidifying");
     } else if (humidity <= humidityLowThreshold) {
-      recommendations.add("Low humidity detected (${humidity}%) — may cause dryness; consider humidifier");
+      recommendations.add("Low humidity detected ($humidity%) — may cause dryness; consider humidifier");
     }
 
     return recommendations;

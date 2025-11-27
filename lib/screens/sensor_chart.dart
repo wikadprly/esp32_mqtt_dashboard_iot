@@ -6,14 +6,13 @@ class SensorChart extends StatelessWidget {
   final List<SensorData> sensorDataList;
   final String sensorType; // 'suhu' or 'humidity'
 
-  SensorChart({required this.sensorDataList, required this.sensorType});
+  const SensorChart({Key? key, required this.sensorDataList, required this.sensorType}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     String title = sensorType == 'suhu' ? 'Temperature (°C)' : 'Humidity (%)';
     Color color = sensorType == 'suhu' ? Colors.red : Colors.blue;
     Color lineColor = sensorType == 'suhu' ? Colors.red : Colors.blue;
-    Color dotColor = sensorType == 'suhu' ? Colors.red : Colors.blue;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -84,7 +83,7 @@ class SensorChart extends StatelessWidget {
                 border: Border.all(color: const Color(0xff37434d)),
               ),
               minX: 0,
-              maxX: sensorDataList.length > 0 ? sensorDataList.length - 1 : 0,
+              maxX: sensorDataList.isNotEmpty ? sensorDataList.length - 1 : 0,
               minY: sensorDataList.isNotEmpty
                   ? sensorDataList.map((e) => e.value).reduce((a, b) => a < b ? a : b) - 5
                   : 0,

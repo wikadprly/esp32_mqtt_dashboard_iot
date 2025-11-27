@@ -3,8 +3,10 @@ import 'package:provider/provider.dart';
 import '../providers/mqtt_provider.dart';
 
 class DeviceControlScreen extends StatefulWidget {
+  const DeviceControlScreen({Key? key}) : super(key: key);
+
   @override
-  _DeviceControlScreenState createState() => _DeviceControlScreenState();
+  State<DeviceControlScreen> createState() => _DeviceControlScreenState();
 }
 
 class _DeviceControlScreenState extends State<DeviceControlScreen> {
@@ -18,8 +20,8 @@ class _DeviceControlScreenState extends State<DeviceControlScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Device Control'),
-        backgroundColor: Colors.blue,
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.blue[100],
+        foregroundColor: Colors.blue[900],
       ),
       body: Padding(
         padding: EdgeInsets.all(16.0),
@@ -31,10 +33,10 @@ class _DeviceControlScreenState extends State<DeviceControlScreen> {
               padding: EdgeInsets.all(10),
               margin: EdgeInsets.only(bottom: 20),
               decoration: BoxDecoration(
-                color: mqttProvider.isConnected ? Colors.green[100] : Colors.red[100],
+                color: mqttProvider.isConnected ? Colors.blue[100]! : Colors.red[100]!,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: mqttProvider.isConnected ? Colors.green : Colors.red,
+                  color: mqttProvider.isConnected ? Colors.blue[600]! : Colors.red,
                 ),
               ),
               child: Row(
@@ -45,7 +47,7 @@ class _DeviceControlScreenState extends State<DeviceControlScreen> {
                     height: 12,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: mqttProvider.isConnected ? Colors.green : Colors.red,
+                      color: mqttProvider.isConnected ? Colors.blue[600] : Colors.red,
                     ),
                   ),
                   SizedBox(width: 8),
@@ -53,7 +55,7 @@ class _DeviceControlScreenState extends State<DeviceControlScreen> {
                     mqttProvider.connectionState,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: mqttProvider.isConnected ? Colors.green[800] : Colors.red[800],
+                      color: mqttProvider.isConnected ? Colors.blue[800] : Colors.red[800],
                     ),
                   ),
                 ],
@@ -86,12 +88,12 @@ class _DeviceControlScreenState extends State<DeviceControlScreen> {
                             );
                           } : null,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green,
+                            backgroundColor: Colors.blue[300],
                             padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
                           ),
                           child: Text(
                             'Turn ON',
-                            style: TextStyle(color: Colors.white),
+                            style: TextStyle(color: Colors.blue[900]),
                           ),
                         ),
                         ElevatedButton(
@@ -181,12 +183,12 @@ class _DeviceControlScreenState extends State<DeviceControlScreen> {
                         }
                       } : null,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
+                        backgroundColor: Colors.blue[300],
                         padding: EdgeInsets.symmetric(vertical: 15),
                       ),
                       child: Text(
                         'Publish',
-                        style: TextStyle(color: Colors.white, fontSize: 16),
+                        style: TextStyle(color: Colors.blue[900], fontSize: 16),
                       ),
                     ),
                   ],

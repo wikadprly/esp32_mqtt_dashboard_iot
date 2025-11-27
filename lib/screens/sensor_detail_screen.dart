@@ -7,24 +7,25 @@ import 'sensor_chart.dart';
 class SensorDetailScreen extends StatefulWidget {
   final String sensorType; // 'suhu' or 'humidity'
 
-  SensorDetailScreen({required this.sensorType});
+  const SensorDetailScreen({Key? key, required this.sensorType}) : super(key: key);
 
   @override
-  _SensorDetailScreenState createState() => _SensorDetailScreenState();
+  State<SensorDetailScreen> createState() => _SensorDetailScreenState();
 }
 
 class _SensorDetailScreenState extends State<SensorDetailScreen> {
+
   @override
   Widget build(BuildContext context) {
     String title = widget.sensorType == 'suhu' ? 'Temperature' : 'Humidity';
     IconData icon = widget.sensorType == 'suhu' ? Icons.thermostat : Icons.water_drop;
-    Color color = widget.sensorType == 'suhu' ? Colors.red : Colors.blue;
+    Color color = widget.sensorType == 'suhu' ? Colors.red : Colors.blue[300]!;
 
     return Scaffold(
       appBar: AppBar(
         title: Text('$title History'),
-        backgroundColor: Colors.blue,
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.blue[100],
+        foregroundColor: Colors.blue[900],
       ),
       body: Padding(
         padding: EdgeInsets.all(16.0),
