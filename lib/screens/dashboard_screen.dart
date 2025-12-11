@@ -26,7 +26,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     Provider.of<MqttProvider>(context, listen: false).onMessageReceived =
         (String topic, String message) {
       // Handle incoming sensor data
-      final databaseProvider = Provider.of<DatabaseProvider>(context, listen: false);
+      final databaseProvider =
+          Provider.of<DatabaseProvider>(context, listen: false);
       _handleIncomingData(topic, message, databaseProvider);
     };
 
@@ -37,7 +38,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
   }
 
-  void _handleIncomingData(String topic, String message, DatabaseProvider databaseProvider) {
+  void _handleIncomingData(
+      String topic, String message, DatabaseProvider databaseProvider) {
     if (topic.contains('/sensor/')) {
       // Parse the message as a number
       double? value = double.tryParse(message);
@@ -61,9 +63,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         if (_temperature != 0.0 && _humidity != 0.0) {
           setState(() {
             _recommendations = RecommendationEngine.getRecommendations(
-              _temperature,
-              _humidity
-            );
+                _temperature, _humidity);
           });
         }
 
@@ -78,14 +78,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
       length: 3,
       child: Scaffold(
         appBar: AppBar(
-          title: Text('IoT Dashboard'),
+          title: const Text('IoT Dashboard'),
           backgroundColor: Colors.blue[100],
           foregroundColor: Colors.blue[900],
           bottom: TabBar(
             labelColor: Colors.blue[900],
             unselectedLabelColor: Colors.blue[600],
             indicatorColor: Colors.blue[900],
-            tabs: [
+            tabs: const [
               Tab(text: 'Control'),
               Tab(text: 'History'),
               Tab(text: 'Settings'),
@@ -107,7 +107,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final mqttProvider = Provider.of<MqttProvider>(context);
 
     return Padding(
-      padding: EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(16.0),
       child: SingleChildScrollView(
         child: Column(
           children: [
@@ -115,7 +115,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Card(
               elevation: 4,
               child: Padding(
-                padding: EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(16.0),
                 child: Row(
                   children: [
                     Container(
@@ -123,14 +123,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       height: 12,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: mqttProvider.isConnected ? Colors.blue[900] : Colors.grey,
+                        color: mqttProvider.isConnected
+                            ? Colors.blue[900]
+                            : Colors.grey,
                       ),
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Flexible(
                       child: Text(
                         'Connection Status: ${mqttProvider.connectionState}',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
                         ),
@@ -148,13 +150,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
 
             // Middle Section: Device Control Card
             Card(
               elevation: 4,
               child: Padding(
-                padding: EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(16.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -166,7 +168,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         color: Colors.blue[900],
                       ),
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -192,13 +194,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
 
             // Bottom Section: Sensor Readings Cards
             Card(
               elevation: 4,
               child: Padding(
-                padding: EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(16.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -210,14 +212,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         color: Colors.blue[900],
                       ),
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
                         // Temperature
                         Expanded(
                           child: Container(
-                            padding: EdgeInsets.all(12),
+                            padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
                               color: Colors.red[50],
                               borderRadius: BorderRadius.circular(8),
@@ -225,12 +227,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                             child: Column(
                               children: [
-                                Icon(
+                                const Icon(
                                   Icons.thermostat,
                                   color: Colors.red,
                                   size: 32,
                                 ),
-                                SizedBox(height: 8),
+                                const SizedBox(height: 8),
                                 Text(
                                   'Temperature',
                                   style: TextStyle(
@@ -238,10 +240,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     color: Colors.grey[700],
                                   ),
                                 ),
-                                SizedBox(height: 4),
+                                const SizedBox(height: 4),
                                 Text(
-                                  _hasData ? '${_temperature.toStringAsFixed(1)}°C' : '--°C',
-                                  style: TextStyle(
+                                  _hasData
+                                      ? '${_temperature.toStringAsFixed(1)}°C'
+                                      : '--°C',
+                                  style: const TextStyle(
                                     fontSize: 24,
                                     fontWeight: FontWeight.bold,
                                     color: Colors.red,
@@ -251,11 +255,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                           ),
                         ),
-                        SizedBox(width: 12),
+                        const SizedBox(width: 12),
                         // Humidity
                         Expanded(
                           child: Container(
-                            padding: EdgeInsets.all(12),
+                            padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
                               color: Colors.blue[50],
                               borderRadius: BorderRadius.circular(8),
@@ -268,7 +272,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   color: Colors.blue[300],
                                   size: 32,
                                 ),
-                                SizedBox(height: 8),
+                                const SizedBox(height: 8),
                                 Text(
                                   'Humidity',
                                   style: TextStyle(
@@ -276,9 +280,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     color: Colors.blue[700],
                                   ),
                                 ),
-                                SizedBox(height: 4),
+                                const SizedBox(height: 4),
                                 Text(
-                                  _hasData ? '${_humidity.toStringAsFixed(1)}%' : '--%',
+                                  _hasData
+                                      ? '${_humidity.toStringAsFixed(1)}%'
+                                      : '--%',
                                   style: TextStyle(
                                     fontSize: 24,
                                     fontWeight: FontWeight.bold,
@@ -295,17 +301,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             // Footer: Disconnect Button
             ElevatedButton(
-              onPressed: mqttProvider.isConnected ? () {
-                mqttProvider.disconnect();
-              } : null,
+              onPressed: mqttProvider.isConnected
+                  ? () {
+                      mqttProvider.disconnect();
+                    }
+                  : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
-                padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
               ),
-              child: Text(
+              child: const Text(
                 'Disconnect',
                 style: TextStyle(color: Colors.white),
               ),
@@ -320,7 +329,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final databaseProvider = Provider.of<DatabaseProvider>(context);
 
     return Padding(
-      padding: EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(16.0),
       child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -329,7 +338,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Card(
               elevation: 4,
               child: Padding(
-                padding: EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(16.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -341,21 +350,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         color: Colors.blue[900],
                       ),
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     SizedBox(
                       height: 180, // Reduced height to prevent overflow
                       child: FutureBuilder<List<SensorData>>(
                         future: databaseProvider.getSensorDataByType('suhu'),
                         builder: (context, snapshot) {
-                          if (snapshot.connectionState == ConnectionState.waiting) {
-                            return Center(child: CircularProgressIndicator());
-                          } else if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
-                            return Center(child: Text('No temperature data available'));
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const Center(
+                                child: CircularProgressIndicator());
+                          } else if (snapshot.hasError ||
+                              !snapshot.hasData ||
+                              snapshot.data!.isEmpty) {
+                            return const Center(
+                                child: Text('No temperature data available'));
                           } else {
                             List<SensorData> sensorData = snapshot.data!;
                             // Get only the last 20 records for the chart
-                            if (sensorData.isNotEmpty && sensorData.length > 20) {
-                              sensorData = sensorData.reversed.take(20).toList().reversed.toList();
+                            if (sensorData.isNotEmpty &&
+                                sensorData.length > 20) {
+                              sensorData = sensorData.reversed
+                                  .take(20)
+                                  .toList()
+                                  .reversed
+                                  .toList();
                             }
                             return SensorChart(
                               sensorDataList: sensorData,
@@ -369,13 +388,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
 
             // Humidity Chart
             Card(
               elevation: 4,
               child: Padding(
-                padding: EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(16.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -387,21 +406,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         color: Colors.blue[900],
                       ),
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     SizedBox(
                       height: 180, // Reduced height to prevent overflow
                       child: FutureBuilder<List<SensorData>>(
-                        future: databaseProvider.getSensorDataByType('humidity'),
+                        future:
+                            databaseProvider.getSensorDataByType('humidity'),
                         builder: (context, snapshot) {
-                          if (snapshot.connectionState == ConnectionState.waiting) {
-                            return Center(child: CircularProgressIndicator());
-                          } else if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
-                            return Center(child: Text('No humidity data available'));
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const Center(
+                                child: CircularProgressIndicator());
+                          } else if (snapshot.hasError ||
+                              !snapshot.hasData ||
+                              snapshot.data!.isEmpty) {
+                            return const Center(
+                                child: Text('No humidity data available'));
                           } else {
                             List<SensorData> sensorData = snapshot.data!;
                             // Get only the last 20 records for the chart
-                            if (sensorData.isNotEmpty && sensorData.length > 20) {
-                              sensorData = sensorData.reversed.take(20).toList().reversed.toList();
+                            if (sensorData.isNotEmpty &&
+                                sensorData.length > 20) {
+                              sensorData = sensorData.reversed
+                                  .take(20)
+                                  .toList()
+                                  .reversed
+                                  .toList();
                             }
                             return SensorChart(
                               sensorDataList: sensorData,
@@ -415,13 +445,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
 
             // Recommendations Section
             Card(
               elevation: 4,
               child: Padding(
-                padding: EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(16.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -433,25 +463,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         color: Colors.blue[900],
                       ),
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     _recommendations.isNotEmpty
-                      ? Column(
-                          children: _recommendations.map((rec) => Padding(
-                            padding: EdgeInsets.only(bottom: 8.0),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Icon(Icons.info, color: Colors.orange, size: 16),
-                                SizedBox(width: 8),
-                                Expanded(child: Text(rec)),
-                              ],
-                            ),
-                          )).toList(),
-                        )
-                      : Text(
-                          'No recommendations yet. Suggestions will appear when sensor values exceed thresholds.',
-                          style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                        ),
+                        ? Column(
+                            children: _recommendations
+                                .map((rec) => Padding(
+                                      padding:
+                                          const EdgeInsets.only(bottom: 8.0),
+                                      child: Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Icon(Icons.info,
+                                              color: Colors.orange, size: 16),
+                                          const SizedBox(width: 8),
+                                          Expanded(child: Text(rec)),
+                                        ],
+                                      ),
+                                    ))
+                                .toList(),
+                          )
+                        : Text(
+                            'No recommendations yet. Suggestions will appear when sensor values exceed thresholds.',
+                            style: TextStyle(
+                                fontSize: 14, color: Colors.grey[600]),
+                          ),
                   ],
                 ),
               ),
@@ -465,13 +501,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildSettingsTab(BuildContext context) {
     final mqttProvider = Provider.of<MqttProvider>(context);
     final brokerController = TextEditingController(text: mqttProvider.broker);
-    final portController = TextEditingController(text: mqttProvider.port.toString());
-    final usernameController = TextEditingController(text: mqttProvider.username);
-    final passwordController = TextEditingController(text: mqttProvider.password);
-    final clientIdController = TextEditingController(text: mqttProvider.clientId);
+    final portController =
+        TextEditingController(text: mqttProvider.port.toString());
+    final usernameController =
+        TextEditingController(text: mqttProvider.username);
+    final passwordController =
+        TextEditingController(text: mqttProvider.password);
+    final clientIdController =
+        TextEditingController(text: mqttProvider.clientId);
 
     return Padding(
-      padding: EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(16.0),
       child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -484,71 +524,70 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 color: Colors.blue[900],
               ),
             ),
-            SizedBox(height: 16),
-
+            const SizedBox(height: 16),
             Card(
               elevation: 4,
               child: Padding(
-                padding: EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(16.0),
                 child: Column(
                   children: [
                     // Broker Host
                     TextFormField(
                       controller: brokerController,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: 'Broker Host',
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.link),
                       ),
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
                     // Port
                     TextFormField(
                       controller: portController,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: 'Port',
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.portrait),
                       ),
                       keyboardType: TextInputType.number,
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
                     // Username
                     TextFormField(
                       controller: usernameController,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: 'Username',
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.person),
                       ),
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
                     // Password
                     TextFormField(
                       controller: passwordController,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: 'Password',
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.lock),
                       ),
                       obscureText: true,
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
                     // Client ID (Read-only)
                     TextFormField(
                       controller: clientIdController,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: 'Client ID',
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.tag),
                       ),
                       readOnly: true,
                     ),
-                    SizedBox(height: 24),
+                    const SizedBox(height: 24),
 
                     // Save & Connect Button
                     SizedBox(
@@ -557,7 +596,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         onPressed: () async {
                           // Update the MQTT provider with new values
                           mqttProvider.broker = brokerController.text;
-                          mqttProvider.port = int.tryParse(portController.text) ?? 1883;
+                          mqttProvider.port =
+                              int.tryParse(portController.text) ?? 1883;
                           mqttProvider.username = usernameController.text;
                           mqttProvider.password = passwordController.text;
 
@@ -569,18 +609,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           // Connect with new settings
                           await mqttProvider.connect();
 
-                          if (mounted) { // Check if widget is still mounted
+                          if (mounted) {
+                            // Check if widget is still mounted
                             if (mqttProvider.isConnected) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('Connected successfully!'),
+                                  content:
+                                      const Text('Connected successfully!'),
                                   backgroundColor: Colors.blue[300],
                                 ),
                               );
                             } else {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('Connection failed: ${mqttProvider.connectionState}'),
+                                  content: Text(
+                                      'Connection failed: ${mqttProvider.connectionState}'),
                                   backgroundColor: Colors.red,
                                 ),
                               );
@@ -589,11 +632,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blue[300],
-                          padding: EdgeInsets.symmetric(vertical: 15),
+                          padding: const EdgeInsets.symmetric(vertical: 15),
                         ),
                         child: Text(
                           'Save & Connect',
-                          style: TextStyle(fontSize: 16, color: Colors.blue[900]),
+                          style:
+                              TextStyle(fontSize: 16, color: Colors.blue[900]),
                         ),
                       ),
                     ),

@@ -28,14 +28,14 @@ class _SensorDetailScreenState extends State<SensorDetailScreen> {
         foregroundColor: Colors.blue[900],
       ),
       body: Padding(
-        padding: EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16.0),
         child: Consumer<DatabaseProvider>(
           builder: (context, databaseProvider, child) {
             return FutureBuilder<List<SensorData>>(
               future: databaseProvider.getSensorDataByType(widget.sensorType),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator());
+                  return const Center(child: CircularProgressIndicator());
                 } else if (snapshot.hasError) {
                   return Center(child: Text('Error: ${snapshot.error}'));
                 } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
@@ -52,18 +52,18 @@ class _SensorDetailScreenState extends State<SensorDetailScreen> {
                       // Summary card
                       Card(
                         child: Padding(
-                          padding: EdgeInsets.all(16.0),
+                          padding: const EdgeInsets.all(16.0),
                           child: Row(
                             children: [
                               Container(
-                                padding: EdgeInsets.all(12),
+                                padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
                                   color: color.withOpacity(0.2),
                                   shape: BoxShape.circle,
                                 ),
                                 child: Icon(icon, color: color),
                               ),
-                              SizedBox(width: 16),
+                              const SizedBox(width: 16),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -91,12 +91,12 @@ class _SensorDetailScreenState extends State<SensorDetailScreen> {
                         ),
                       ),
 
-                      SizedBox(height: 20),
+                      const SizedBox(height: 20),
 
                       // Chart
                       Card(
                         child: Padding(
-                          padding: EdgeInsets.all(16.0),
+                          padding: const EdgeInsets.all(16.0),
                           child: SensorChart(
                             sensorDataList: sensorData,
                             sensorType: widget.sensorType,
@@ -104,26 +104,26 @@ class _SensorDetailScreenState extends State<SensorDetailScreen> {
                         ),
                       ),
 
-                      SizedBox(height: 20),
+                      const SizedBox(height: 20),
 
                       // Raw data list
-                      Text(
+                      const Text(
                         'Recent Readings',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      SizedBox(height: 10),
+                      const SizedBox(height: 10),
                       Expanded(
                         child: ListView.builder(
                           itemCount: sensorData.length,
                           itemBuilder: (context, index) {
                             SensorData data = sensorData[index];
                             return Card(
-                              margin: EdgeInsets.only(bottom: 8),
+                              margin: const EdgeInsets.only(bottom: 8),
                               child: Padding(
-                                padding: EdgeInsets.all(12),
+                                padding: const EdgeInsets.all(12),
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
@@ -139,7 +139,7 @@ class _SensorDetailScreenState extends State<SensorDetailScreen> {
                                         ),
                                         Text(
                                           '${data.value.toStringAsFixed(1)} ${widget.sensorType == 'suhu' ? "°C" : "%"}',
-                                          style: TextStyle(
+                                          style: const TextStyle(
                                             fontSize: 16,
                                             fontWeight: FontWeight.bold,
                                           ),

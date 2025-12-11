@@ -18,7 +18,7 @@ class SensorChart extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: EdgeInsets.only(left: 16.0, bottom: 8.0),
+          padding: const EdgeInsets.only(left: 16.0, bottom: 8.0),
           child: Text(
             title,
             style: TextStyle(
@@ -30,10 +30,10 @@ class SensorChart extends StatelessWidget {
         ),
         Container(
           height: 200,
-          padding: EdgeInsets.all(8.0),
+          padding: const EdgeInsets.all(8.0),
           child: LineChart(
             LineChartData(
-              gridData: FlGridData(
+              gridData: const FlGridData(
                 show: true,
                 drawVerticalLine: true,
                 horizontalInterval: 1,
@@ -41,26 +41,26 @@ class SensorChart extends StatelessWidget {
               ),
               titlesData: FlTitlesData(
                 show: true,
-                rightTitles: AxisTitles(
+                rightTitles: const AxisTitles(
                   sideTitles: SideTitles(showTitles: false),
                 ),
-                topTitles: AxisTitles(
+                topTitles: const AxisTitles(
                   sideTitles: SideTitles(showTitles: false),
                 ),
                 bottomTitles: AxisTitles(
                   sideTitles: SideTitles(
                     showTitles: true,
                     getTitlesWidget: (value, titleMeta) {
-                      if (sensorDataList.isEmpty) return Text('');
+                      if (sensorDataList.isEmpty) return const Text('');
                       int index = value.toInt();
                       if (index >= 0 && index < sensorDataList.length) {
                         DateTime time = sensorDataList[index].timestamp;
                         return Text(
                           '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}',
-                          style: TextStyle(color: Colors.grey, fontSize: 10),
+                          style: const TextStyle(color: Colors.grey, fontSize: 10),
                         );
                       }
-                      return Text('');
+                      return const Text('');
                     },
                     reservedSize: 25,
                   ),
@@ -71,7 +71,7 @@ class SensorChart extends StatelessWidget {
                     getTitlesWidget: (value, titleMeta) {
                       return Text(
                         value.toInt().toString(),
-                        style: TextStyle(color: Colors.grey, fontSize: 10),
+                        style: const TextStyle(color: Colors.grey, fontSize: 10),
                       );
                     },
                     reservedSize: 25,
@@ -101,7 +101,7 @@ class SensorChart extends StatelessWidget {
                   color: lineColor,
                   barWidth: 2,
                   isStrokeCapRound: true,
-                  dotData: FlDotData(
+                  dotData: const FlDotData(
                     show: true,
                   ),
                   belowBarData: BarAreaData(

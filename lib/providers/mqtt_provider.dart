@@ -7,46 +7,50 @@ import '../providers/database_provider.dart';
 class MqttProvider with ChangeNotifier {
   MqttServerClient? _client;
   String _connectionState = 'Disconnected';
-  final String _nim = '33424225'; // Hardcoded NIM
+  final String _nim = '33424225';
   bool _isConnected = false;
 
-  // Hardcoded MQTT settings
-  String broker = 'broker.emqx.io';
+  // ============================
+  // MQTT CONFIG FOR RASPBERRY PI
+  // ============================
+  String broker = '10.247.21.137'; // NEW: Local MQTT Broker
   int port = 1883;
-  String username = 'emqx';
-  String password = 'public';
-  String clientId = 'flutter-client-33424225-${DateTime.now().millisecondsSinceEpoch}';
+  String username = 'wika'; // NEW
+  String password = 'raspi'; // NEW
+  String clientId =
+      'flutter-client-33424225-${DateTime.now().millisecondsSinceEpoch}';
 
   String get connectionState => _connectionState;
   bool get isConnected => _isConnected;
   String get nim => _nim;
 
-  // Callbacks
   Function(String topic, String message)? onMessageReceived;
   DatabaseProvider? _databaseProvider;
 
-  // Set the database provider for data service
+  // Set Database Provider
   void setDatabaseProvider(DatabaseProvider databaseProvider) {
     _databaseProvider = databaseProvider;
   }
 
+  // =======================================
+  // CONNECT TO MQTT BROKER (LOCAL NETWORK)
+  // =======================================
   Future<void> connect() async {
-    // Create MQTT client with conditional logic for web
     _client = MqttServerClient(broker, clientId);
-
-    // Set port
     _client!.port = port;
 
-    // For web, we need to use WebSocket
+    // Only for web: force websocket (ESP tidak pakai)
     if (kIsWeb) {
-      _client!.secure = false; // Use unencrypted WebSocket for web
+      _client!.secure = false;
+      _client!.useWebSocket = true;
     }
 
-    _client!.logging(on: false);
-    _client!.keepAlivePeriod = 60;
-    _client!.onConnected = _onConnected;
-    _client!.onDisconnected = _onDisconnected;
-    _client!.onSubscribed = _onSubscribed;
+    _client!
+      ..logging(on: false)
+      ..keepAlivePeriod = 60
+      ..onConnected = _onConnected
+      ..onDisconnected = _onDisconnected
+      ..onSubscribed = _onSubscribed;
 
     final connMsg = MqttConnectMessage()
         .withClientIdentifier(clientId)
@@ -60,20 +64,24 @@ class MqttProvider with ChangeNotifier {
       notifyListeners();
       await _client!.connect();
     } catch (e) {
-      _connectionState = 'Error: ${e.toString()}';
+      _connectionState = 'Error: $e';
       _isConnected = false;
       notifyListeners();
       return;
     }
 
-    // Subscribe to sensor topics after successful connection
     if (_client!.connectionStatus!.state == MqttConnectionState.connected) {
+      // Subscribe topics sesuai Arduino
       _client!.subscribe('polines/$_nim/data/sensor/suhu', MqttQos.atMostOnce);
-      _client!.subscribe('polines/$_nim/data/sensor/humidity', MqttQos.atMostOnce);
+      _client!
+          .subscribe('polines/$_nim/data/sensor/humidity', MqttQos.atMostOnce);
+      _client!.subscribe('iot/status', MqttQos.atMostOnce);
+
       _client!.updates!.listen(_onMessage);
     }
   }
 
+  // EVENT CALLBACKS
   void _onConnected() {
     _connectionState = 'Connected';
     _isConnected = true;
@@ -87,68 +95,75 @@ class MqttProvider with ChangeNotifier {
   }
 
   void _onSubscribed(String topic) {
-    debugPrint('Successfully subscribed to topic: $topic');
+    debugPrint('Subscribed to $topic');
   }
 
-  void _onMessage(covariant List<MqttReceivedMessage<MqttMessage>> messageList) {
-    for (final message in messageList) {
-      final topic = message.topic;
-      final payload = message.payload as MqttPublishMessage;
-      String messageString = '';
+  // ==============================
+  // HANDLE INCOMING MQTT MESSAGES
+  // ==============================
+  void _onMessage(List<MqttReceivedMessage<MqttMessage>> messageList) {
+    for (final msg in messageList) {
+      final topic = msg.topic;
+      final payload = msg.payload as MqttPublishMessage;
 
-      // Convert payload to string properly - using the correct approach for this version
-      try {
-        // The payload property of MqttPublishMessage contains the raw payload bytes
-        // which we need to convert to a string
-        messageString = payload.payload.message.toList().map((e) => String.fromCharCode(e)).join('');
-      } catch (e) {
-        debugPrint('Error converting payload to string: $e');
-        continue;
-      }
+      String messageString = String.fromCharCodes(
+        payload.payload.message,
+      );
 
-      // Store the received message using data service
+      // Store into database
       if (_databaseProvider != null) {
         final dataService = DataService(_databaseProvider!);
         dataService.parseAndStoreMessage(topic, messageString);
       }
 
-      // Notify listeners about the received message
-      if (onMessageReceived != null) {
-        onMessageReceived!(topic, messageString);
-      }
+      // Callback to UI
+      onMessageReceived?.call(topic, messageString);
     }
   }
 
-  void publish(String topic, String payload, {MqttQos qos = MqttQos.atMostOnce}) {
-    if (_client != null && _client!.connectionStatus!.state == MqttConnectionState.connected) {
-      final builder = MqttClientPayloadBuilder();
-      builder.addString(payload);
-      _client!.publishMessage(topic, qos, builder.payload!);
+  // =======================
+  // PUBLISH DATA TO MQTT
+  // =======================
+  void publish(String topic, String payload,
+      {MqttQos qos = MqttQos.atMostOnce}) {
+    if (_client == null ||
+        _client!.connectionStatus!.state != MqttConnectionState.connected) {
+      return;
+    }
 
-      // Store the published command
-      if (_databaseProvider != null) {
-        final dataService = DataService(_databaseProvider!);
-        dataService.storeCommand(topic, payload, 'sent');
-      }
+    final builder = MqttClientPayloadBuilder();
+    builder.addString(payload);
+
+    _client!.publishMessage(topic, qos, builder.payload!);
+
+    if (_databaseProvider != null) {
+      final dataService = DataService(_databaseProvider!);
+      dataService.storeCommand(topic, payload, 'sent');
     }
   }
 
-  void toggleLed() {
-    if (_isConnected) {
-      final currentValue = _ledState ? 0 : 1;
-      final payload = currentValue.toString();
-      publish('polines/$_nim/data/led', payload);
-      _ledState = ! _ledState;
-    }
-  }
-
+  // =======================
+  // TOGGLE LED FOR ESP32
+  // =======================
   bool _ledState = false;
   bool get ledState => _ledState;
 
+  void toggleLed() {
+    if (!_isConnected) return;
+
+    final nextState = _ledState ? "0" : "1";
+
+    publish('polines/$_nim/data/led', nextState);
+    _ledState = !_ledState;
+
+    notifyListeners();
+  }
+
+  // DISCONNECT CLIENT
   void disconnect() {
-    if (_client != null && _client!.connectionStatus!.state == MqttConnectionState.connected) {
+    if (_client != null &&
+        _client!.connectionStatus!.state == MqttConnectionState.connected) {
       _client!.disconnect();
     }
   }
-
 }

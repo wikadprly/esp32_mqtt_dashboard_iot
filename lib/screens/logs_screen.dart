@@ -11,42 +11,42 @@ class LogsScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Logs'),
+        title: const Text('Logs'),
         backgroundColor: Colors.blue[100],
         foregroundColor: Colors.blue[900],
       ),
       body: Padding(
-        padding: EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            const Text(
               'MQTT Message Logs',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Expanded(
               child: FutureBuilder<List<Map<String, dynamic>>>(
                 future: _getRecentLogs(databaseProvider),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Center(child: CircularProgressIndicator());
+                    return const Center(child: CircularProgressIndicator());
                   } else if (snapshot.hasError) {
                     return Center(child: Text('Error: ${snapshot.error}'));
                   } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return Center(child: Text('No logs available yet'));
+                    return const Center(child: Text('No logs available yet'));
                   } else {
                     return ListView.builder(
                       itemCount: snapshot.data!.length,
                       itemBuilder: (context, index) {
                         final log = snapshot.data![index];
                         return Card(
-                          margin: EdgeInsets.only(bottom: 8),
+                          margin: const EdgeInsets.only(bottom: 8),
                           child: Padding(
-                            padding: EdgeInsets.all(12),
+                            padding: const EdgeInsets.all(12),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -56,7 +56,7 @@ class LogsScreen extends StatelessWidget {
                                       log['type'] == 'publish' ? Icons.upload : Icons.download,
                                       color: log['type'] == 'publish' ? Colors.blue[600] : Colors.blue[300],
                                     ),
-                                    SizedBox(width: 8),
+                                    const SizedBox(width: 8),
                                     Expanded(
                                       child: Text(
                                         log['topic'],
@@ -75,12 +75,12 @@ class LogsScreen extends StatelessWidget {
                                     ),
                                   ],
                                 ),
-                                SizedBox(height: 4),
+                                const SizedBox(height: 4),
                                 Text(
                                   'Payload: ${log['payload']}',
-                                  style: TextStyle(fontSize: 14),
+                                  style: const TextStyle(fontSize: 14),
                                 ),
-                                SizedBox(height: 4),
+                                const SizedBox(height: 4),
                                 Text(
                                   'Status: ${log['status']}',
                                   style: TextStyle(
@@ -157,8 +157,8 @@ class LogsScreen extends StatelessWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Export Data'),
-          content: Text('Choose export format'),
+          title: const Text('Export Data'),
+          content: const Text('Choose export format'),
           actions: [
             TextButton(
               onPressed: () {
@@ -166,13 +166,13 @@ class LogsScreen extends StatelessWidget {
                 // Export to CSV functionality would go here
                 _exportToCSV(context);
               },
-              child: Text('CSV'),
+              child: const Text('CSV'),
             ),
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: Text('Cancel'),
+              child: const Text('Cancel'),
             ),
           ],
         );
@@ -188,7 +188,7 @@ class LogsScreen extends StatelessWidget {
     // and save it as a CSV file
     // For now, just show a success message
     final snackBar = SnackBar(
-      content: Text('CSV export functionality would be implemented here'),
+      content: const Text('CSV export functionality would be implemented here'),
       backgroundColor: Colors.blue[300],
     );
 
