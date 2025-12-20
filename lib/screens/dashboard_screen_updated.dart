@@ -43,7 +43,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void _handleIncomingData(
       String topic, String message, DatabaseProvider databaseProvider) {
     print('Received message on topic: $topic with value: $message');
-
+    
     if (topic.contains('/SUHU')) {
       // Parse the message as a number
       double? value = double.tryParse(message);
@@ -80,7 +80,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (_temperature != 0.0 && _humidity != 0.0) {
       setState(() {
         _recommendations = RecommendationEngine.getRecommendations(
-            _temperature, _humidity, lumen: _lumen);
+            _temperature, _humidity);
       });
     }
   }
@@ -91,7 +91,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       length: 3,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('IoT Dashboard'),
+          title: const Text('IoT Dashboard UAS'),
           backgroundColor: Colors.blue[100],
           foregroundColor: Colors.blue[900],
           bottom: TabBar(
@@ -101,7 +101,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             tabs: const [
               Tab(text: 'Control'),
               Tab(text: 'History'),
-              Tab(text: 'Sensor History'), // New tab for detailed sensor history
+              Tab(text: 'Sensor History'),
               Tab(text: 'Settings'),
             ],
           ),
@@ -871,7 +871,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       controller: TextEditingController(
                           text: mqttProvider.role == MqttUserRole.student
                               ? 'uas25_wika'
-                              : 'uas26_admin'),
+                              : 'admin'),
                       decoration: const InputDecoration(
                         labelText: 'Username (Based on Role)',
                         border: OutlineInputBorder(),
@@ -886,7 +886,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       controller: TextEditingController(
                           text: mqttProvider.role == MqttUserRole.student
                               ? 'uas25_wika'
-                              : 'uas26_admin'),
+                              : 'admin123'),
                       decoration: const InputDecoration(
                         labelText: 'Password (Based on Role)',
                         border: OutlineInputBorder(),

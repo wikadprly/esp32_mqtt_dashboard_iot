@@ -4,15 +4,33 @@ import '../models/sensor_data.dart';
 
 class SensorChart extends StatelessWidget {
   final List<SensorData> sensorDataList;
-  final String sensorType; // 'suhu' or 'humidity'
+  final String sensorType; // 'suhu', 'humidity', or 'lumen'
 
   const SensorChart({Key? key, required this.sensorDataList, required this.sensorType}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    String title = sensorType == 'suhu' ? 'Temperature (°C)' : 'Humidity (%)';
-    Color color = sensorType == 'suhu' ? Colors.red : Colors.blue;
-    Color lineColor = sensorType == 'suhu' ? Colors.red : Colors.blue;
+    String title;
+    Color color;
+    Color lineColor;
+
+    if (sensorType == 'suhu') {
+      title = 'Temperature (°C)';
+      color = Colors.red;
+      lineColor = Colors.red;
+    } else if (sensorType == 'humidity') {
+      title = 'Humidity (%)';
+      color = Colors.blue;
+      lineColor = Colors.blue;
+    } else if (sensorType == 'lumen') {
+      title = 'Lumen (Lux)';
+      color = Colors.yellow[700]!;
+      lineColor = Colors.yellow[700]!;
+    } else {
+      title = 'Sensor Data';
+      color = Colors.grey;
+      lineColor = Colors.grey;
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

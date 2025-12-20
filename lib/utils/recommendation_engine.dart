@@ -4,8 +4,10 @@ class RecommendationEngine {
   static double temperatureLowThreshold = 18.0;
   static double humidityHighThreshold = 80.0;
   static double humidityLowThreshold = 30.0;
+  static double lumenHighThreshold = 1000.0;  // High light intensity
+  static double lumenLowThreshold = 50.0;     // Low light intensity
 
-  static List<String> getRecommendations(double temperature, double humidity) {
+  static List<String> getRecommendations(double temperature, double humidity, {double lumen = 0.0}) {
     List<String> recommendations = [];
 
     // Temperature recommendations
@@ -22,6 +24,15 @@ class RecommendationEngine {
       recommendations.add("Low humidity detected ($humidity%) — may cause dryness; consider humidifier");
     }
 
+    // Lumen recommendations (optional, since older version might not pass lumen value)
+    if (lumen > 0) { // Only if lumen value is provided
+      if (lumen >= lumenHighThreshold) {
+        recommendations.add("High lumen detected ($lumen lux) — consider reducing light intensity or using blinds");
+      } else if (lumen <= lumenLowThreshold) {
+        recommendations.add("Low lumen detected ($lumen lux) — consider increasing light intensity");
+      }
+    }
+
     return recommendations;
   }
 
@@ -31,10 +42,14 @@ class RecommendationEngine {
     double? tempLow,
     double? humidityHigh,
     double? humidityLow,
+    double? lumenHigh,
+    double? lumenLow,
   }) {
     if (tempHigh != null) temperatureHighThreshold = tempHigh;
     if (tempLow != null) temperatureLowThreshold = tempLow;
     if (humidityHigh != null) humidityHighThreshold = humidityHigh;
     if (humidityLow != null) humidityLowThreshold = humidityLow;
+    if (lumenHigh != null) lumenHighThreshold = lumenHigh;
+    if (lumenLow != null) lumenLowThreshold = lumenLow;
   }
 }

@@ -4,166 +4,217 @@ import 'package:mqtt_client/mqtt_server_client.dart';
 import '../services/data_service.dart';
 import '../providers/database_provider.dart';
 
+// ====================================
+// ROLE
+// ====================================
+enum MqttUserRole { student, admin }
+
 class MqttProvider with ChangeNotifier {
   MqttServerClient? _client;
   String _connectionState = 'Disconnected';
-  final String _nim = '33424225';
   bool _isConnected = false;
 
-  // ============================
-  // MQTT CONFIG FOR RASPBERRY PI
-  // ============================
-  String broker = '10.247.21.137'; // NEW: Local MQTT Broker
+  final String _nim = "33424225"; // SESUAI KODE ESP MU
+  MqttUserRole _role = MqttUserRole.student;
+
+  MqttUserRole get role => _role;
+
+  // ====================================
+  // MQTT CONFIG — HARUS MATCH DENGAN ESP32
+  // ====================================
+  String broker = "10.46.113.50";
   int port = 1883;
-  String username = 'wika'; // NEW
-  String password = 'raspi'; // NEW
-  String clientId =
-      'flutter-client-33424225-${DateTime.now().millisecondsSinceEpoch}';
+  String username = "uas25_wika";   // MATCH ESP32
+  String password = "uas25_wika";   // MATCH ESP32
+
+  String get _defaultClientId => "flutter-client-33424225-${DateTime.now().millisecondsSinceEpoch}";
+  String _clientId = "";
+
+  String get clientId => _clientId.isEmpty ? _defaultClientId : _clientId;
 
   String get connectionState => _connectionState;
   bool get isConnected => _isConnected;
   String get nim => _nim;
 
-  Function(String topic, String message)? onMessageReceived;
-  DatabaseProvider? _databaseProvider;
+  // ====================================
+  // TOPIC — MATCH EXACT ESP32
+  // ====================================
+  String get suhuTopic => "UAS25-IOT/$_nim/SUHU";
+  String get kelembapanTopic => "UAS25-IOT/$_nim/KELEMBAPAN";
+  String get lumenTopic => "UAS25-IOT/$_nim/LUMEN";
 
-  // Set Database Provider
-  void setDatabaseProvider(DatabaseProvider databaseProvider) {
-    _databaseProvider = databaseProvider;
+  // CONTROL TOPIC
+  String get statusControlTopic => "UAS25-IOT/Status"; // START / STOP
+  String get ledControlTopic => "UAS25-IOT/$_nim/LED"; // 1 / 0
+
+  // Callback untuk UI
+  Function(String topic, String message)? onMessageReceived;
+
+  DatabaseProvider? _databaseProvider;
+  void setDatabaseProvider(DatabaseProvider db) {
+    _databaseProvider = db;
   }
 
-  // =======================================
-  // CONNECT TO MQTT BROKER (LOCAL NETWORK)
-  // =======================================
+  // ====================================
+  // SET ROLE (student / admin)
+  // ====================================
+  void setUserRole(MqttUserRole role) {
+    _role = role;
+
+    // Jika admin → tidak boleh publish
+    if (role == MqttUserRole.admin) {
+      username = "uas26_admin";
+      password = "uas26_admin";
+    } else {
+      username = "uas25_wika";     // student harus match dengan ESP32 ACL
+      password = "uas25_wika";
+    }
+
+    notifyListeners();
+  }
+
+  // ====================================
+  // CONNECT
+  // ====================================
   Future<void> connect() async {
-    _client = MqttServerClient(broker, clientId);
+    _client = MqttServerClient(broker, _clientId);
     _client!.port = port;
 
-    // Only for web: force websocket (ESP tidak pakai)
     if (kIsWeb) {
-      _client!.secure = false;
       _client!.useWebSocket = true;
+      _client!.secure = false;
     }
 
     _client!
-      ..logging(on: false)
       ..keepAlivePeriod = 60
+      ..logging(on: false)
       ..onConnected = _onConnected
       ..onDisconnected = _onDisconnected
       ..onSubscribed = _onSubscribed;
 
     final connMsg = MqttConnectMessage()
-        .withClientIdentifier(clientId)
         .authenticateAs(username, password)
+        .withClientIdentifier(_clientId)
         .startClean();
 
     _client!.connectionMessage = connMsg;
 
     try {
-      _connectionState = 'Connecting';
+      _connectionState = "Connecting...";
       notifyListeners();
+
       await _client!.connect();
     } catch (e) {
-      _connectionState = 'Error: $e';
+      _connectionState = "Error: $e";
       _isConnected = false;
       notifyListeners();
       return;
     }
 
-    if (_client!.connectionStatus!.state == MqttConnectionState.connected) {
-      // Subscribe topics sesuai Arduino
-      _client!.subscribe('polines/$_nim/data/sensor/suhu', MqttQos.atMostOnce);
-      _client!
-          .subscribe('polines/$_nim/data/sensor/humidity', MqttQos.atMostOnce);
-      _client!.subscribe('iot/status', MqttQos.atMostOnce);
+    if (_client!.connectionStatus!.state ==
+        MqttConnectionState.connected) {
+      // SUBSCRIBE semua topic
+      _client!.subscribe(suhuTopic, MqttQos.atMostOnce);
+      _client!.subscribe(kelembapanTopic, MqttQos.atMostOnce);
+      _client!.subscribe(lumenTopic, MqttQos.atMostOnce);
+
+      _client!.subscribe(statusControlTopic, MqttQos.atMostOnce);
+      _client!.subscribe(ledControlTopic, MqttQos.atMostOnce);
 
       _client!.updates!.listen(_onMessage);
     }
   }
 
-  // EVENT CALLBACKS
+  // ====================================
+  // CALLBACKS
+  // ====================================
   void _onConnected() {
-    _connectionState = 'Connected';
+    _connectionState = "Connected";
     _isConnected = true;
     notifyListeners();
   }
 
   void _onDisconnected() {
-    _connectionState = 'Disconnected';
+    _connectionState = "Disconnected";
     _isConnected = false;
     notifyListeners();
   }
 
   void _onSubscribed(String topic) {
-    debugPrint('Subscribed to $topic');
+    debugPrint("Subscribed: $topic");
   }
 
-  // ==============================
-  // HANDLE INCOMING MQTT MESSAGES
-  // ==============================
-  void _onMessage(List<MqttReceivedMessage<MqttMessage>> messageList) {
-    for (final msg in messageList) {
-      final topic = msg.topic;
-      final payload = msg.payload as MqttPublishMessage;
+  void _onMessage(List<MqttReceivedMessage<MqttMessage>> list) {
+    final msg = list[0];
+    final topic = msg.topic;
+    final payload = (msg.payload as MqttPublishMessage)
+        .payload
+        .message;
 
-      String messageString = String.fromCharCodes(
-        payload.payload.message,
-      );
+    final messageString = String.fromCharCodes(payload);
 
-      // Store into database
-      if (_databaseProvider != null) {
-        final dataService = DataService(_databaseProvider!);
-        dataService.parseAndStoreMessage(topic, messageString);
-      }
-
-      // Callback to UI
-      onMessageReceived?.call(topic, messageString);
+    // Simpan database
+    if (_databaseProvider != null) {
+      final ds = DataService(_databaseProvider!);
+      ds.parseAndStoreMessage(topic, messageString);
     }
+
+    // Callback ke UI
+    onMessageReceived?.call(topic, messageString);
   }
 
-  // =======================
-  // PUBLISH DATA TO MQTT
-  // =======================
-  void publish(String topic, String payload,
-      {MqttQos qos = MqttQos.atMostOnce}) {
-    if (_client == null ||
-        _client!.connectionStatus!.state != MqttConnectionState.connected) {
+  // ====================================
+  // CAN PUBLISH - untuk kontrol akses
+  // ====================================
+  bool canPublish() {
+    return _role == MqttUserRole.student;
+  }
+
+  // ====================================
+  // PUBLISH (untuk LED START/STOP)
+  // ====================================
+  void publish(String topic, String payload) {
+    if (!canPublish()) {
+      debugPrint("Admin tidak boleh publish");
       return;
     }
+
+    if (!isConnected) return;
 
     final builder = MqttClientPayloadBuilder();
     builder.addString(payload);
 
-    _client!.publishMessage(topic, qos, builder.payload!);
+    _client!.publishMessage(topic, MqttQos.atMostOnce, builder.payload!);
 
     if (_databaseProvider != null) {
-      final dataService = DataService(_databaseProvider!);
-      dataService.storeCommand(topic, payload, 'sent');
+      final ds = DataService(_databaseProvider!);
+      ds.storeCommand(topic, payload, "sent");
     }
   }
 
-  // =======================
-  // TOGGLE LED FOR ESP32
-  // =======================
+  // ====================================
+  // CONTROL: LED ESP32
+  // ====================================
   bool _ledState = false;
   bool get ledState => _ledState;
 
   void toggleLed() {
-    if (!_isConnected) return;
-
     final nextState = _ledState ? "0" : "1";
 
-    publish('polines/$_nim/data/led', nextState);
-    _ledState = !_ledState;
+    publish(ledControlTopic, nextState);
 
+    _ledState = !_ledState;
     notifyListeners();
   }
 
-  // DISCONNECT CLIENT
+  // START / STOP ESP32
+  void startDevice() => publish(statusControlTopic, "START");
+  void stopDevice() => publish(statusControlTopic, "STOP");
+
+  // ====================================
+  // DISCONNECT
+  // ====================================
   void disconnect() {
-    if (_client != null &&
-        _client!.connectionStatus!.state == MqttConnectionState.connected) {
-      _client!.disconnect();
-    }
+    _client?.disconnect();
   }
 }

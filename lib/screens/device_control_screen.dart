@@ -82,9 +82,9 @@ class _DeviceControlScreenState extends State<DeviceControlScreen> {
                       children: [
                         ElevatedButton(
                           onPressed: mqttProvider.isConnected ? () {
-                            mqttProvider.publish('polines/${mqttProvider.nim}/data/led', '1');
+                            mqttProvider.toggleLed();
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('LED ON command sent')),
+                              const SnackBar(content: Text('LED command sent')),
                             );
                           } : null,
                           style: ElevatedButton.styleFrom(
@@ -92,15 +92,31 @@ class _DeviceControlScreenState extends State<DeviceControlScreen> {
                             padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
                           ),
                           child: Text(
-                            'Turn ON',
+                            'Toggle LED',
                             style: TextStyle(color: Colors.blue[900]),
                           ),
                         ),
                         ElevatedButton(
                           onPressed: mqttProvider.isConnected ? () {
-                            mqttProvider.publish('polines/${mqttProvider.nim}/data/led', '0');
+                            mqttProvider.startDevice();
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('LED OFF command sent')),
+                              const SnackBar(content: Text('START command sent')),
+                            );
+                          } : null,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                          ),
+                          child: const Text(
+                            'START Device',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                        ElevatedButton(
+                          onPressed: mqttProvider.isConnected ? () {
+                            mqttProvider.stopDevice();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('STOP command sent')),
                             );
                           } : null,
                           style: ElevatedButton.styleFrom(
@@ -108,7 +124,7 @@ class _DeviceControlScreenState extends State<DeviceControlScreen> {
                             padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
                           ),
                           child: const Text(
-                            'Turn OFF',
+                            'STOP Device',
                             style: TextStyle(color: Colors.white),
                           ),
                         ),
@@ -214,27 +230,43 @@ class _DeviceControlScreenState extends State<DeviceControlScreen> {
                     ),
                     const SizedBox(height: 12),
                     ListTile(
-                      title: Text('polines/${mqttProvider.nim}/data/led'),
+                      title: Text('UAS25-IOT/${mqttProvider.nim}/LED'),
                       subtitle: const Text('Control LED (payload: 1 or 0)'),
                       trailing: const Icon(Icons.arrow_forward_ios),
                       onTap: () {
-                        _topicController.text = 'polines/${mqttProvider.nim}/data/led';
+                        _topicController.text = 'UAS25-IOT/${mqttProvider.nim}/LED';
                       },
                     ),
                     ListTile(
-                      title: Text('polines/${mqttProvider.nim}/data/sensor/suhu'),
+                      title: Text('UAS25-IOT/${mqttProvider.nim}/SUHU'),
                       subtitle: const Text('Temperature data (payload: numeric value)'),
                       trailing: const Icon(Icons.arrow_forward_ios),
                       onTap: () {
-                        _topicController.text = 'polines/${mqttProvider.nim}/data/sensor/suhu';
+                        _topicController.text = 'UAS25-IOT/${mqttProvider.nim}/SUHU';
                       },
                     ),
                     ListTile(
-                      title: Text('polines/${mqttProvider.nim}/data/sensor/humidity'),
+                      title: Text('UAS25-IOT/${mqttProvider.nim}/KELEMBAPAN'),
                       subtitle: const Text('Humidity data (payload: numeric value)'),
                       trailing: const Icon(Icons.arrow_forward_ios),
                       onTap: () {
-                        _topicController.text = 'polines/${mqttProvider.nim}/data/sensor/humidity';
+                        _topicController.text = 'UAS25-IOT/${mqttProvider.nim}/KELEMBAPAN';
+                      },
+                    ),
+                    ListTile(
+                      title: Text('UAS25-IOT/${mqttProvider.nim}/LUMEN'),
+                      subtitle: const Text('Lumen data (payload: numeric value)'),
+                      trailing: const Icon(Icons.arrow_forward_ios),
+                      onTap: () {
+                        _topicController.text = 'UAS25-IOT/${mqttProvider.nim}/LUMEN';
+                      },
+                    ),
+                    ListTile(
+                      title: Text('UAS25-IOT/Status'),
+                      subtitle: const Text('Control START/STOP (payload: START or STOP)'),
+                      trailing: const Icon(Icons.arrow_forward_ios),
+                      onTap: () {
+                        _topicController.text = 'UAS25-IOT/Status';
                       },
                     ),
                   ],

@@ -10,9 +10,12 @@ class DataService {
 
   // Parse incoming MQTT message and store if it's sensor data
   Future<void> parseAndStoreMessage(String topic, String payload) async {
-    if (topic.contains('/data/sensor/')) {
+    if (topic.contains('/data/sensor/') ||
+        topic.contains('/SUHU') ||
+        topic.contains('/KELEMBAPAN') ||
+        topic.contains('/LUMEN')) {
       await _parseAndStoreSensorData(topic, payload);
-    } else if (topic.contains('/data/led')) {
+    } else if (topic.contains('/data/led') || topic.contains('/LED')) {
       await _parseAndStoreCommand(topic, payload, 'received');
     }
   }
@@ -20,9 +23,13 @@ class DataService {
   Future<void> _parseAndStoreSensorData(String topic, String payload) async {
     try {
       double value = double.parse(payload);
-      String sensorType = topic.contains('/suhu') ? 'suhu' : 
-                         topic.contains('/humidity') ? 'humidity' : 'unknown';
-      
+      String sensorType = topic.contains('/SUHU') ? 'suhu' :
+                         topic.contains('/KELEMBAPAN') ? 'humidity' :
+                         topic.contains('/LUMEN') ? 'lumen' :
+                         topic.contains('/suhu') ? 'suhu' :
+                         topic.contains('/humidity') ? 'humidity' :
+                         topic.contains('/ldr') ? 'ldr' : 'unknown';
+
       if (sensorType != 'unknown') {
         SensorData sensorData = SensorData(
           topic: topic,
@@ -30,7 +37,7 @@ class DataService {
           value: value,
           timestamp: DateTime.now(),
         );
-        
+
         await databaseProvider.insertSensorData(sensorData);
       }
     } catch (e) {
