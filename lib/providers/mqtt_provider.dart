@@ -22,13 +22,13 @@ class MqttProvider with ChangeNotifier {
   // ====================================
   // MQTT CONFIG — HARUS MATCH DENGAN ESP32
   // ====================================
-  String broker = "10.46.113.50";
+  String broker = "10.33.29.218";
   int port = 1883;
   String username = "uas25_wika";   // MATCH ESP32
   String password = "uas25_wika";   // MATCH ESP32
 
   String get _defaultClientId => "flutter-client-33424225-${DateTime.now().millisecondsSinceEpoch}";
-  String _clientId = "";
+  final String _clientId = "";
 
   String get clientId => _clientId.isEmpty ? _defaultClientId : _clientId;
 
@@ -77,51 +77,67 @@ class MqttProvider with ChangeNotifier {
   // CONNECT
   // ====================================
   Future<void> connect() async {
-    _client = MqttServerClient(broker, _clientId);
-    _client!.port = port;
-
-    if (kIsWeb) {
-      _client!.useWebSocket = true;
-      _client!.secure = false;
-    }
-
-    _client!
-      ..keepAlivePeriod = 60
-      ..logging(on: false)
-      ..onConnected = _onConnected
-      ..onDisconnected = _onDisconnected
-      ..onSubscribed = _onSubscribed;
-
-    final connMsg = MqttConnectMessage()
-        .authenticateAs(username, password)
-        .withClientIdentifier(_clientId)
-        .startClean();
-
-    _client!.connectionMessage = connMsg;
+    _connectionState = "Connecting...";
+    notifyListeners();
 
     try {
-      _connectionState = "Connecting...";
-      notifyListeners();
+      _client = MqttServerClient(broker, clientId);
+      _client!.port = port;
+
+      if (kIsWeb) {
+        _client!.useWebSocket = true;
+        _client!.secure = false;
+      }
+
+      _client!
+        ..keepAlivePeriod = 60
+        ..logging(on: false)
+        ..autoReconnect = true  // Enable automatic reconnection
+        ..onConnected = _onConnected
+        ..onDisconnected = _onDisconnected
+        ..onSubscribed = _onSubscribed
+        ..onAutoReconnected = _onAutoReconnected;
+
+      final connMsg = MqttConnectMessage()
+          .authenticateAs(username, password)
+          .withClientIdentifier(clientId)
+          .startClean();
+
+      _client!.connectionMessage = connMsg;
 
       await _client!.connect();
     } catch (e) {
-      _connectionState = "Error: $e";
+      _connectionState = "Connection failed: ${e.toString()}";
       _isConnected = false;
       notifyListeners();
+      debugPrint("MQTT Connection error: $e");
       return;
     }
 
     if (_client!.connectionStatus!.state ==
         MqttConnectionState.connected) {
-      // SUBSCRIBE semua topic
-      _client!.subscribe(suhuTopic, MqttQos.atMostOnce);
-      _client!.subscribe(kelembapanTopic, MqttQos.atMostOnce);
-      _client!.subscribe(lumenTopic, MqttQos.atMostOnce);
+      _connectionState = "Connected";
+      _isConnected = true;
 
-      _client!.subscribe(statusControlTopic, MqttQos.atMostOnce);
-      _client!.subscribe(ledControlTopic, MqttQos.atMostOnce);
+      // SUBSCRIBE semua topic
+      try {
+        _client!.subscribe(suhuTopic, MqttQos.atMostOnce);
+        _client!.subscribe(kelembapanTopic, MqttQos.atMostOnce);
+        _client!.subscribe(lumenTopic, MqttQos.atMostOnce);
+        _client!.subscribe(statusControlTopic, MqttQos.atMostOnce);
+        _client!.subscribe(ledControlTopic, MqttQos.atMostOnce);
+
+        debugPrint("Successfully subscribed to all topics");
+      } catch (e) {
+        debugPrint("Subscription error: $e");
+      }
 
       _client!.updates!.listen(_onMessage);
+      notifyListeners();
+    } else {
+      _connectionState = "Failed to connect";
+      _isConnected = false;
+      notifyListeners();
     }
   }
 
@@ -131,7 +147,17 @@ class MqttProvider with ChangeNotifier {
   void _onConnected() {
     _connectionState = "Connected";
     _isConnected = true;
+
+    // Request current device status after connection
+    _requestDeviceStatus();
+
     notifyListeners();
+  }
+
+  void _requestDeviceStatus() {
+    // In a real implementation, you might send a request to get current device status
+    // For now, we'll just log that we're requesting status
+    debugPrint("Requesting current device status...");
   }
 
   void _onDisconnected() {
@@ -144,6 +170,33 @@ class MqttProvider with ChangeNotifier {
     debugPrint("Subscribed: $topic");
   }
 
+  void _onAutoReconnected() {
+    debugPrint("MQTT Client has auto-reconnected");
+    _connectionState = "Reconnected";
+    _isConnected = true;
+
+    // Resubscribe to topics after reconnection
+    _resubscribeTopics();
+
+    notifyListeners();
+  }
+
+  void _resubscribeTopics() {
+    if (_client != null && _client!.connectionStatus!.state == MqttConnectionState.connected) {
+      try {
+        _client!.subscribe(suhuTopic, MqttQos.atMostOnce);
+        _client!.subscribe(kelembapanTopic, MqttQos.atMostOnce);
+        _client!.subscribe(lumenTopic, MqttQos.atMostOnce);
+        _client!.subscribe(statusControlTopic, MqttQos.atMostOnce);
+        _client!.subscribe(ledControlTopic, MqttQos.atMostOnce);
+
+        debugPrint("Successfully resubscribed to all topics after reconnection");
+      } catch (e) {
+        debugPrint("Resubscription error: $e");
+      }
+    }
+  }
+
   void _onMessage(List<MqttReceivedMessage<MqttMessage>> list) {
     final msg = list[0];
     final topic = msg.topic;
@@ -152,6 +205,12 @@ class MqttProvider with ChangeNotifier {
         .message;
 
     final messageString = String.fromCharCodes(payload);
+
+    // Periksa apakah ini pesan status LED
+    if (topic == ledControlTopic) {
+      bool newLedState = messageString == "1";
+      updateLedState(newLedState);
+    }
 
     // Simpan database
     if (_databaseProvider != null) {
@@ -179,16 +238,25 @@ class MqttProvider with ChangeNotifier {
       return;
     }
 
-    if (!isConnected) return;
+    if (!isConnected) {
+      debugPrint("Cannot publish: not connected to MQTT broker");
+      return;
+    }
 
-    final builder = MqttClientPayloadBuilder();
-    builder.addString(payload);
+    try {
+      final builder = MqttClientPayloadBuilder();
+      builder.addString(payload);
 
-    _client!.publishMessage(topic, MqttQos.atMostOnce, builder.payload!);
+      _client!.publishMessage(topic, MqttQos.atMostOnce, builder.payload!);
 
-    if (_databaseProvider != null) {
-      final ds = DataService(_databaseProvider!);
-      ds.storeCommand(topic, payload, "sent");
+      debugPrint("Published to $topic: $payload");
+
+      if (_databaseProvider != null) {
+        final ds = DataService(_databaseProvider!);
+        ds.storeCommand(topic, payload, "sent");
+      }
+    } catch (e) {
+      debugPrint("Failed to publish to $topic: $e");
     }
   }
 
@@ -203,18 +271,47 @@ class MqttProvider with ChangeNotifier {
 
     publish(ledControlTopic, nextState);
 
+    // Update state secara lokal sementara
     _ledState = !_ledState;
     notifyListeners();
   }
 
+  // Metode untuk memperbarui state LED dari pesan MQTT
+  void updateLedState(bool newState) {
+    if (_ledState != newState) {
+      _ledState = newState;
+      notifyListeners();
+    }
+  }
+
   // START / STOP ESP32
-  void startDevice() => publish(statusControlTopic, "START");
-  void stopDevice() => publish(statusControlTopic, "STOP");
+  bool _deviceRunning = false;
+  bool get deviceRunning => _deviceRunning;
+
+  void startDevice() {
+    publish(statusControlTopic, "START");
+    _deviceRunning = true;
+    notifyListeners();
+  }
+
+  void stopDevice() {
+    publish(statusControlTopic, "STOP");
+    _deviceRunning = false;
+    notifyListeners();
+  }
 
   // ====================================
   // DISCONNECT
   // ====================================
   void disconnect() {
-    _client?.disconnect();
+    try {
+      _client?.disconnect();
+      _connectionState = "Disconnected";
+      _isConnected = false;
+      notifyListeners();
+      debugPrint("MQTT Client disconnected");
+    } catch (e) {
+      debugPrint("Error during disconnection: $e");
+    }
   }
 }

@@ -102,40 +102,48 @@ class _SensorHistoryScreenState extends State<SensorHistoryScreen> {
                     const SizedBox(height: 16),
                     
                     // Date range filter
-                    Row(
+                    Column(
                       children: [
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: _selectStartDate,
-                            icon: const Icon(Icons.calendar_today, size: 16),
-                            label: Text(
-                              _startDate != null 
-                                ? 'From: ${_formatDate(_startDate!)}' 
-                                : 'Select Start Date',
-                              style: const TextStyle(fontSize: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: _selectStartDate,
+                                icon: const Icon(Icons.calendar_today, size: 16),
+                                label: Text(
+                                  _startDate != null
+                                    ? 'From: ${_formatDate(_startDate!)}'
+                                    : 'Start Date',
+                                  style: const TextStyle(fontSize: 12),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.blue[200],
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                ),
+                              ),
                             ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue[200],
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                            ),
-                          ),
+                          ],
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: _selectEndDate,
-                            icon: const Icon(Icons.calendar_today, size: 16),
-                            label: Text(
-                              _endDate != null 
-                                ? 'To: ${_formatDate(_endDate!)}' 
-                                : 'Select End Date',
-                              style: const TextStyle(fontSize: 12),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: _selectEndDate,
+                                icon: const Icon(Icons.calendar_today, size: 16),
+                                label: Text(
+                                  _endDate != null
+                                    ? 'To: ${_formatDate(_endDate!)}'
+                                    : 'End Date',
+                                  style: const TextStyle(fontSize: 12),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.blue[200],
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                ),
+                              ),
                             ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue[200],
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                            ),
-                          ),
+                          ],
                         ),
                       ],
                     ),

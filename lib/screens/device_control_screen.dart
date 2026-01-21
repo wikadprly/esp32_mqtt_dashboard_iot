@@ -77,63 +77,148 @@ class _DeviceControlScreenState extends State<DeviceControlScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    Column(
                       children: [
-                        ElevatedButton(
-                          onPressed: mqttProvider.isConnected ? () {
-                            mqttProvider.toggleLed();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('LED command sent')),
-                            );
-                          } : null,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue[300],
-                            padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                          ),
-                          child: Text(
-                            'Toggle LED',
-                            style: TextStyle(color: Colors.blue[900]),
-                          ),
+                        Wrap(
+                          spacing: 16,
+                          runSpacing: 16,
+                          alignment: WrapAlignment.center,
+                          children: [
+                            ElevatedButton(
+                              onPressed: mqttProvider.isConnected ? () {
+                                mqttProvider.toggleLed();
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('LED command sent')),
+                                );
+                              } : null,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.blue[300],
+                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    width: 12,
+                                    height: 12,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: mqttProvider.ledState ? Colors.green : Colors.grey,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Toggle LED',
+                                    style: TextStyle(color: Colors.blue[900]),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            ElevatedButton(
+                              onPressed: mqttProvider.isConnected ? () {
+                                mqttProvider.startDevice();
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('START command sent')),
+                                );
+                              } : null,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green,
+                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                              ),
+                              child: const Text(
+                                'START Device',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ),
+                            ElevatedButton(
+                              onPressed: mqttProvider.isConnected ? () {
+                                mqttProvider.stopDevice();
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('STOP command sent')),
+                                );
+                              } : null,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red,
+                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                              ),
+                              child: const Text(
+                                'STOP Device',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ),
+                          ],
                         ),
-                        ElevatedButton(
-                          onPressed: mqttProvider.isConnected ? () {
-                            mqttProvider.startDevice();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('START command sent')),
-                            );
-                          } : null,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green,
-                            padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                          ),
-                          child: const Text(
-                            'START Device',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ),
-                        ElevatedButton(
-                          onPressed: mqttProvider.isConnected ? () {
-                            mqttProvider.stopDevice();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('STOP command sent')),
-                            );
-                          } : null,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red,
-                            padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                          ),
-                          child: const Text(
-                            'STOP Device',
-                            style: TextStyle(color: Colors.white),
-                          ),
+                        const SizedBox(height: 12),
+                        // Status indicators
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            // LED Status
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: Colors.blue[50],
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: Colors.blue[200]!),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    width: 10,
+                                    height: 10,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: mqttProvider.ledState ? Colors.green : Colors.grey,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'LED: ${mqttProvider.ledState ? "ON" : "OFF"}',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.blue[800],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            // Device Status
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: mqttProvider.deviceRunning ? Colors.green[50] : Colors.grey[50],
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(
+                                  color: mqttProvider.deviceRunning ? Colors.green[200]! : Colors.grey[200]!,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    width: 10,
+                                    height: 10,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: mqttProvider.deviceRunning ? Colors.green : Colors.grey,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    mqttProvider.deviceRunning ? 'RUNNING' : 'STOPPED',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: mqttProvider.deviceRunning ? Colors.green[800] : Colors.grey[600],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Current LED State: ${mqttProvider.ledState ? "ON" : "OFF"}',
-                      style: const TextStyle(fontStyle: FontStyle.italic),
                     ),
                   ],
                 ),

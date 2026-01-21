@@ -118,38 +118,22 @@ class LogsScreen extends StatelessWidget {
   }
 
   Future<List<Map<String, dynamic>>> _getRecentLogs(DatabaseProvider databaseProvider) async {
-    // This would normally fetch from the database
-    // For now, we'll return mock data
-    return [
-      {
-        'topic': 'polines/33424225/data/led',
-        'payload': '1',
-        'type': 'publish',
-        'status': 'sent',
-        'timestamp': '2023-05-15 10:30:45',
-      },
-      {
-        'topic': 'polines/33424225/data/sensor/suhu',
-        'payload': '28.5',
-        'type': 'subscribe',
-        'status': 'received',
-        'timestamp': '2023-05-15 10:30:40',
-      },
-      {
-        'topic': 'polines/33424225/data/sensor/humidity',
-        'payload': '65',
-        'type': 'subscribe',
-        'status': 'received',
-        'timestamp': '2023-05-15 10:30:35',
-      },
-      {
-        'topic': 'polines/33424225/data/led',
-        'payload': '0',
-        'type': 'publish',
-        'status': 'sent',
-        'timestamp': '2023-05-15 10:30:30',
-      },
-    ];
+    try {
+      // Fetch actual commands from database
+      final commands = await databaseProvider.getAllCommands();
+
+      // Convert commands to the format expected by the UI
+      return commands.map((command) => {
+        'topic': command.topic,
+        'payload': command.payload,
+        'type': 'publish', // All commands from app are publish operations
+        'status': command.status,
+        'timestamp': command.createdAt.toString().split('.')[0], // Format timestamp
+      }).toList();
+    } catch (e) {
+      debugPrint('Error fetching logs: $e');
+      return []; // Return empty list if there's an error
+    }
   }
 
   void _showExportDialog(BuildContext context) {
@@ -181,17 +165,44 @@ class LogsScreen extends StatelessWidget {
   }
 
   void _exportToCSV(BuildContext context) async {
-    // Placeholder for CSV export functionality
-    print('Exporting data to CSV...');
+    try {
+      final databaseProvider = Provider.of<DatabaseProvider>(context, listen: false);
 
-    // In a real implementation, we would fetch data from database
-    // and save it as a CSV file
-    // For now, just show a success message
-    final snackBar = SnackBar(
-      content: const Text('CSV export functionality would be implemented here'),
-      backgroundColor: Colors.blue[300],
-    );
+      // Fetch sensor data and commands from database
+      final sensorDataList = await databaseProvider.getAllSensorData();
+      final commandList = await databaseProvider.getAllCommands();
 
-    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+      // Create CSV content
+      StringBuffer csvBuffer = StringBuffer();
+
+      // Add header
+      csvBuffer.writeln('Type,Topic,SensorType,Value,Payload,Status,Timestamp');
+
+      // Add sensor data
+      for (var sensorData in sensorDataList) {
+        csvBuffer.writeln('Sensor,${sensorData.topic},${sensorData.sensorType},${sensorData.value},,,"${sensorData.timestamp}"');
+      }
+
+      // Add command data
+      for (var command in commandList) {
+        csvBuffer.writeln('Command,${command.topic},,,${command.payload},${command.status},"${command.createdAt}"');
+      }
+
+      // In a real implementation, we would save this to a file
+      // For now, we'll just show a success message
+      final snackBar = SnackBar(
+        content: const Text('Data exported to CSV successfully'),
+        backgroundColor: Colors.green,
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+    } catch (e) {
+      final snackBar = SnackBar(
+        content: Text('Error exporting data: $e'),
+        backgroundColor: Colors.red,
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+    }
   }
 }

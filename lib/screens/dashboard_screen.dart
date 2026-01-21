@@ -212,39 +212,81 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     const SizedBox(height: 16),
                     // Only show START/STOP control for students
                     if (mqttProvider.role == MqttUserRole.student)
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      Column(
                         children: [
-                          ElevatedButton(
-                            onPressed: mqttProvider.isConnected ? () {
-                              mqttProvider.startDevice();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('START command sent')),
-                              );
-                            } : null,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green,
-                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                            ),
-                            child: const Text(
-                              'START',
-                              style: TextStyle(color: Colors.white),
-                            ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              Expanded(
+                                child: ElevatedButton(
+                                  onPressed: mqttProvider.isConnected ? () {
+                                    mqttProvider.startDevice();
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('START command sent')),
+                                    );
+                                  } : null,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.green,
+                                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                  ),
+                                  child: const Text(
+                                    'START',
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: ElevatedButton(
+                                  onPressed: mqttProvider.isConnected ? () {
+                                    mqttProvider.stopDevice();
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('STOP command sent')),
+                                    );
+                                  } : null,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.red,
+                                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                  ),
+                                  child: const Text(
+                                    'STOP',
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                          ElevatedButton(
-                            onPressed: mqttProvider.isConnected ? () {
-                              mqttProvider.stopDevice();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('STOP command sent')),
-                              );
-                            } : null,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.red,
-                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                          const SizedBox(height: 8),
+                          // Status indicator for device running state
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: mqttProvider.deviceRunning ? Colors.green[100] : Colors.grey[100],
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: mqttProvider.deviceRunning ? Colors.green[300]! : Colors.grey[300]!,
+                              ),
                             ),
-                            child: const Text(
-                              'STOP',
-                              style: TextStyle(color: Colors.white),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Container(
+                                  width: 10,
+                                  height: 10,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: mqttProvider.deviceRunning ? Colors.green : Colors.grey,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  mqttProvider.deviceRunning ? 'Device is RUNNING' : 'Device is STOPPED',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: mqttProvider.deviceRunning ? Colors.green[700] : Colors.grey[600],
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
@@ -296,14 +338,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               color: Colors.grey[700],
                             ),
                           ),
-                          Switch(
-                            value: mqttProvider.ledState,
-                            onChanged: mqttProvider.isConnected && mqttProvider.canPublish()
-                                ? (value) {
-                                    mqttProvider.toggleLed();
-                                  }
-                                : null,
-                            activeThumbColor: Colors.blue[300],
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 12,
+                                height: 12,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: mqttProvider.ledState ? Colors.green : Colors.grey,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Switch(
+                                value: mqttProvider.ledState,
+                                onChanged: mqttProvider.isConnected && mqttProvider.canPublish()
+                                    ? (value) {
+                                        mqttProvider.toggleLed();
+                                      }
+                                    : null,
+                                activeThumbColor: Colors.blue[300],
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -342,127 +398,131 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    Column(
                       children: [
-                        // Temperature
-                        Expanded(
-                          child: Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.red[50],
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Colors.red[200]!),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            // Temperature
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.red[50],
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: Colors.red[200]!),
+                                ),
+                                child: Column(
+                                  children: [
+                                    const Icon(
+                                      Icons.thermostat,
+                                      color: Colors.red,
+                                      size: 28,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'Temperature',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey[700],
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      _hasData
+                                          ? '${_temperature.toStringAsFixed(1)}°C'
+                                          : '--°C',
+                                      style: const TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.red,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
-                            child: Column(
-                              children: [
-                                const Icon(
-                                  Icons.thermostat,
-                                  color: Colors.red,
-                                  size: 32,
+                            const SizedBox(width: 12),
+                            // Humidity
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue[50],
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: Colors.blue[100]!),
                                 ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Temperature',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey[700],
-                                  ),
+                                child: Column(
+                                  children: [
+                                    Icon(
+                                      Icons.water_drop,
+                                      color: Colors.blue[300],
+                                      size: 28,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'Humidity',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.blue[700],
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      _hasData
+                                          ? '${_humidity.toStringAsFixed(1)}%'
+                                          : '--%',
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.blue[800],
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  _hasData
-                                      ? '${_temperature.toStringAsFixed(1)}°C'
-                                      : '--°C',
-                                  style: const TextStyle(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.red,
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
-                          ),
+                          ],
                         ),
-                        const SizedBox(width: 12),
-                        // Humidity
-                        Expanded(
-                          child: Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.blue[50],
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Colors.blue[100]!),
-                            ),
-                            child: Column(
-                              children: [
-                                Icon(
-                                  Icons.water_drop,
-                                  color: Colors.blue[300],
-                                  size: 32,
+                        const SizedBox(height: 16),
+                        // Lumen
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.yellow[50],
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.yellow[200]!),
+                          ),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.light_mode,
+                                color: Colors.yellow[700],
+                                size: 28,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Lumen (Light)',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.yellow[800],
                                 ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Humidity',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.blue[700],
-                                  ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                _hasData
+                                    ? '${_lumen.toStringAsFixed(1)} lux'
+                                    : '-- lux',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.yellow[800],
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  _hasData
-                                      ? '${_humidity.toStringAsFixed(1)}%'
-                                      : '--%',
-                                  style: TextStyle(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.blue[800],
-                                  ),
-                                ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
-                    ),
-                    const SizedBox(height: 16),
-                    // Lumen
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.yellow[50],
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.yellow[200]!),
-                      ),
-                      child: Column(
-                        children: [
-                          Icon(
-                            Icons.light_mode,
-                            color: Colors.yellow[700],
-                            size: 32,
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Lumen (Light)',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.yellow[800],
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            _hasData
-                                ? '${_lumen.toStringAsFixed(1)} lux'
-                                : '-- lux',
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.yellow[800],
-                            ),
-                          ),
-                        ],
-                      ),
                     ),
                   ],
                 ),

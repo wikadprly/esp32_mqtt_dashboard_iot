@@ -25,3 +25,9 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  # Add custom fonts if needed
+  # fonts:
+  #   - family: CustomFont
+  #     fonts:
+  #       - asset: assets/fonts/custom_font.ttf
